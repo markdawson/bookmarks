@@ -10,7 +10,26 @@ from .models import Profile, Contact
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
+from actions.utils import create_action
+from actions.models import Action
 
+@login_required
+def dashboard(request):
+	# Display all actions by default
+	actions = Action.objects.exclude(user=request.user)
+	print(actions)
+	print('is this thing on?')
+	following_ids = request.user.following.values_list('id',flat=True)
+	if following_ids:
+		# If user is following others, retrieve only their actions
+		actions = actions.filter(user_id__in=following_ids)\
+		.select_related('user','user__profile')\
+		.prefetch_related('target')
+		actions = actions[:10]
+		print(actions)
+	return render(request, 'account/dashboard.html',
+			{'section':'dashboard',
+			'actions':actions})
 
 @ajax_required
 @require_POST
@@ -27,6 +46,7 @@ def user_follow(request):
 			else:
 				Contact.objects.filter(user_from=request.user,
 							user_to=user).delete()
+				create_action(request.user, 'is following', user)
 			return JsonResponse({'status':'ok'})
 		except User.DoesNotExist:
 			return JsonResponse({'status':'ko'})
@@ -65,11 +85,11 @@ def user_login(request):
 		form = LoginForm()
 	return render(request, 'account/login.html', {'form': form})
 
-@login_required
-def dashboard(request):
-	return render(request, 
-				'account/dashboard.html', 
-				{'section': 'dashboard'})
+# @login_required
+# def dashboard(request):
+# 	return render(request, 
+# 				'account/dashboard.html', 
+# 				{'section': 'dashboard'})
 
 def register(request):
 	if request.method =='POST':
@@ -82,6 +102,7 @@ def register(request):
 			# Save the User object
 			new_user.save()
 			profile = Profile.objects.create(user=new_user)
+			create_action(new_user, 'has created an account')
 			return render(request, 'account/register_done.html', {'new_user': new_user})
 		else:
 			print("Form not valid")
