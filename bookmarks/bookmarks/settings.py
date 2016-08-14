@@ -46,7 +46,11 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'social.apps.django_app.default',
+    'sorl.thumbnail',
+    'actions',
 )
+
+THUMBNAIL_DEBUG = True
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -132,3 +136,7 @@ AUTHENTICATION_BACKENDS = (
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = get_env_variable('GOOGLE_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = get_env_variable('GOOGLE_SECRET')
+
+ABSOLUTE_URL_OVERRIDES = {
+	'auth.user': lambda u: reverse_lazy('user_detail', args=[u.username])
+	}
