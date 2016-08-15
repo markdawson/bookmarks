@@ -17,8 +17,6 @@ from actions.models import Action
 def dashboard(request):
 	# Display all actions by default
 	actions = Action.objects.exclude(user=request.user)
-	print(actions)
-	print('is this thing on?')
 	following_ids = request.user.following.values_list('id',flat=True)
 	if following_ids:
 		# If user is following others, retrieve only their actions
